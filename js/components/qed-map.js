@@ -39,15 +39,17 @@ var EventInfo = React.createClass({
             content: contentString
         });
         google.maps.event.addListener(this.marker, 'click', function () {
-            this.infoWindow.open(this.props.map, this.marker);
-            // Re-center map on click?
-            // Close InfoWindow if already opened?
+            if (this.infoWindow.getMap()) {
+                this.infoWindow.setMap(null);
+            } else {
+                this.infoWindow.open(this.props.map, this.marker);
+            }
         }.bind(this));
     },
 
     componentWillUnmount: function () {
-        this.marker.setMap(null);
         this.infoWindow.close();
+        this.marker.setMap(null);
     },
 
     render: function () {
