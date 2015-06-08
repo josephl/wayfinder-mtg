@@ -16,6 +16,13 @@ var EventActions = {
             'actionType': EventConstants.EVENT_CREATE_ALL,
             'events': events
         });
+    },
+
+    filter: function (filterData) {
+        AppDispatcher.handleViewAction({
+            'actionType': EventConstants.FILTER,
+            'filterData': filterData
+        });
     }
 
 };

@@ -42,6 +42,8 @@ var EventInfo = React.createClass({
             if (this.infoWindow.getMap()) {
                 this.infoWindow.setMap(null);
             } else {
+                // TODO: turn off other info window if one is on
+                // Somehow notify parent map class of this
                 this.infoWindow.open(this.props.map, this.marker);
             }
         }.bind(this));
@@ -126,7 +128,43 @@ var EventInfo = React.createClass({
 });
 
 
+/**
+ * Determin if event should be shown
+ * @param (eventData) data of event
+ * @param (filters) Object of filters from EventStore
+ * @returns bool
+ */
+function showEvent (eventData, filters) {
+    var value;
+    var startDateFilters;
+
+    for (var key in filters) {
+        value = eventData[key];
+        if (key == 'StartDate') {
+            // handle date range
+            value = moment(value, 'MM/DD/YYYY');
+            startDateFilters = filters[key];
+            if ((startDateFilters.BEGINS && startDateFilters.BEGINS > value) ||
+                (startDateFilters.ENDS && startDateFilters.ENDS < value)) {
+                return false;
+            }
+        } else if (!filters[key][value]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+/**
+ * Google Map component, the primary View
+ */
 var QedMap = React.createClass({
+
+    propTypes: {
+        allEvents: React.PropTypes.object,
+        eventFilters: React.PropTypes.object
+    },
 
     componentDidMount: function () {
         var node = this.getDOMNode();
@@ -136,16 +174,8 @@ var QedMap = React.createClass({
 
     render: function () {
         var eventData;
-        var eventsInfo = [];
-
-        if (typeof(this.gmap) !== 'undefined') {
-            for (var key in this.props.allEvents) {
-                eventData = this.props.allEvents[key];
-                eventsInfo.push(<EventInfo {...eventData} key={key} map={this.gmap} />);
-            }
-        } else {
-            eventsInfo = [];
-        }
+        var eventsInfo = typeof(this.gmap) !== 'undefined' ?
+            this.filteredEvents() : [];
 
         return (
             <div>
@@ -153,6 +183,23 @@ var QedMap = React.createClass({
                 {eventsInfo}
             </div>
         );
+    },
+
+    /* Apply filters to events */
+    filteredEvents: function () {
+        var eventData;
+        var eventsInfo = [];
+
+        for (var key in this.props.allEvents) {
+            eventData = this.props.allEvents[key];
+            if (showEvent(eventData, this.props.eventFilters)) {
+                eventsInfo.push(
+                    <EventInfo {...eventData} key={key} map={this.gmap} />
+                );
+            }
+        }
+
+        return eventsInfo;
     },
 
     containerStyles: {

@@ -7,7 +7,8 @@ var React = require('react');
 
 function getQedState() {
     return {
-        allEvents: EventStore.getAll()
+        allEvents: EventStore.getAllEvents(),
+        eventFilters: EventStore.getEventFilters()
     };
 }
 
@@ -19,6 +20,7 @@ function eventReqListener () {
 }
 
 
+/* Perform ajax request for all events information */
 function initialEventRequest () {
     var req = new XMLHttpRequest();
     req.onload = eventReqListener;
@@ -27,6 +29,9 @@ function initialEventRequest () {
 }
 
 
+/**
+ * Top level application component
+ */
 var QedApp = React.createClass({
 
     getInitialState: function () {
@@ -47,6 +52,7 @@ var QedApp = React.createClass({
             <div>
                 <QedMap
                     allEvents={this.state.allEvents}
+                    eventFilters={this.state.eventFilters}
                 />
             </div>
         );

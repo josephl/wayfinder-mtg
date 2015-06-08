@@ -4,8 +4,25 @@ var EventEmitter = require('events').EventEmitter;
 var assign = require('object-assign');
 
 
+var EVENT_FILTER_DEFAULTS = {
+    PlayFormatCode: {
+        STANDARD: true,
+        MODERN: true,
+        SEALED: true
+    },
+    EventTypeCode: {
+        PPTQ: true
+    },
+    StartDate:  {
+        BEGINS: moment().startOf('day'),
+        ENDS: moment('08/16/2015', 'MM/DD/YYYY')
+    }
+};
+
 // Primary data
 var _events = {};
+var _eventFilters = assign(EVENT_FILTER_DEFAULTS, {});
+
 
 var CHANGE_EVENT = 'change';
 
@@ -33,9 +50,25 @@ function updateAll (updates) {
 }
 
 
+/* Set filter values 
+ * @param (filterData) Object to update _eventFilters */
+function filter (filterData) {
+    _eventFilters = assign(_eventFilters, filterData);
+}
+
+
+/**
+ * Primary Store for application
+ * Manages all events and filter options
+ */
 var EventStore = assign({}, EventEmitter.prototype, {
-    getAll: function () {
+
+    getAllEvents: function () {
         return _events;
+    },
+
+    getEventFilters: function () {
+        return _eventFilters;
     },
 
     emitChange: function () {
@@ -64,6 +97,9 @@ AppDispatcher.register(function (payload) {
         case EventConstants.EVENT_CREATE_ALL:
             createAll(action.events);
             EventStore.emitChange();
+            break;
+        case EventConstants.FILTER:
+            filter(action.filterData);
             break;
         default:
             console.log('noop');
