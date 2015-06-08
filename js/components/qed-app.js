@@ -12,6 +12,7 @@ function getQedState() {
 }
 
 
+/* Callback for a AJAX request for event data */
 function eventReqListener () {
     var jsonResponse = JSON.parse(this.responseText);
     EventActions.createAll(jsonResponse.results);
@@ -44,7 +45,6 @@ var QedApp = React.createClass({
     render: function () {
         return (
             <div>
-                Qed App
                 <QedMap
                     allEvents={this.state.allEvents}
                 />
