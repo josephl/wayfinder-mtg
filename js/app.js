@@ -1,6 +1,6 @@
 var React = require('react');
 
-var QedApp = require('./components/qed-app.js');
+var QedApp = require('./components/qed-app');
 
 
 React.render(

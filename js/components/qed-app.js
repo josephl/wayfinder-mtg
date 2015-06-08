@@ -1,6 +1,6 @@
-var EventActions = require('../actions/event-actions.js');
-var EventStore = require('../stores/event-store.js');
-var QedMap = require('./qed-map.js');
+var EventActions = require('../actions/event-actions');
+var EventStore = require('../stores/event-store');
+var QedMap = require('./qed-map');
 
 var React = require('react');
 
