@@ -14,6 +14,10 @@ function wizardsUrl (id, country) {
 }
 
 
+/* Cache filtered Markers and InfoWindows */
+var _cache = {};
+
+
 /**
  * View for each Event
  * Also manages Maps-level controls for the Event, including
@@ -28,31 +32,52 @@ var EventInfo = React.createClass({
     },
 
     componentDidMount: function () {
-        var contentString = this.getDOMNode().innerHTML.replace(REACTID_REGEX, '');
-        this.position = new google.maps.LatLng(this.props.Address.Latitude,
-            this.props.Address.Longitude);
-        this.marker = new google.maps.Marker({
-            map: this.props.map,
-            position: this.position,
-            title: this.props.Name
-        });
-        this.infoWindow = new google.maps.InfoWindow({
-            content: contentString
-        });
-        google.maps.event.addListener(this.marker, 'click', function () {
-            if (this.infoWindow.getMap()) {
-                this.infoWindow.setMap(null);
-            } else {
-                // TODO: turn off other info window if one is on
-                // Somehow notify parent map class of this
-                this.infoWindow.open(this.props.map, this.marker);
-            }
-        }.bind(this));
+        var cachedEvent = _cache[this.props.Id];
+        var contentString;
+        var position;
+
+        if (typeof(cachedEvent) !== 'undefined') {
+            this.marker = cachedEvent.marker;
+            this.marker.setMap(this.props.map);
+            this.infoWindow = cachedEvent.infoWindow;
+            _cache[this.props.Id] = undefined;
+        } else {
+            contentString = this.getDOMNode().innerHTML.replace(
+                REACTID_REGEX, '');
+            position = new google.maps.LatLng(this.props.Address.Latitude,
+                this.props.Address.Longitude);
+            this.marker = new google.maps.Marker({
+                map: this.props.map,
+                position: position,
+                title: this.props.Name
+            });
+            this.infoWindow = new google.maps.InfoWindow({
+                content: contentString
+            });
+        }
+
+        this.clickListener = google.maps.event.addListener(this.marker, 'click',
+            function () {
+                if (this.infoWindow.getMap()) {
+                    this.infoWindow.setMap(null);
+                } else {
+                    // TODO: turn off other info window if one is on
+                    // Somehow notify parent map class of this
+                    this.infoWindow.open(this.props.map, this.marker);
+                }
+            }.bind(this));
     },
 
     componentWillUnmount: function () {
         this.infoWindow.close();
         this.marker.setMap(null);
+        google.maps.event.removeListener(this.clickListener);
+
+        // cache InfoWindow and Marker
+        _cache[this.props.Id] = {
+            marker: this.marker,
+            infoWindow: this.infoWindow
+        };
     },
 
     render: function () {
