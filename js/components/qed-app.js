@@ -1,6 +1,7 @@
 var EventActions = require('../actions/event-actions');
 var EventStore = require('../stores/event-store');
 var QedMap = require('./qed-map');
+var QedForm = require('./qed-form');
 
 var React = require('react');
 
@@ -52,8 +53,9 @@ var QedApp = React.createClass({
             <div>
                 <QedMap
                     allEvents={this.state.allEvents}
-                    eventFilters={this.state.eventFilters}
-                />
+                    eventFilters={this.state.eventFilters} />
+                <QedForm
+                    eventFilters={this.state.eventFilters} />
             </div>
         );
     },

@@ -50,10 +50,22 @@ function updateAll (updates) {
 }
 
 
+/* Recursive nested assign implementation */
+function nestedAssign(src, filter) {
+    for (var key in filter) {
+        if (typeof(filter[key]) === 'object') {
+            nestedAssign(src[key], filter[key]);
+        } else {
+            src[key] = filter[key];
+        }
+    }
+}
+
+
 /* Set filter values 
  * @param (filterData) Object to update _eventFilters */
 function filter (filterData) {
-    _eventFilters = assign(_eventFilters, filterData);
+    nestedAssign(_eventFilters, filterData);
 }
 
 
@@ -82,6 +94,7 @@ var EventStore = assign({}, EventEmitter.prototype, {
     removeChangeListener: function (callback) {
         this.removeListener(CHANGE_EVENT, callback);
     }
+
 });
 
 
@@ -100,6 +113,7 @@ AppDispatcher.register(function (payload) {
             break;
         case EventConstants.FILTER:
             filter(action.filterData);
+            EventStore.emitChange();
             break;
         default:
             console.log('noop');
