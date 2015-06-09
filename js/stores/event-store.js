@@ -25,6 +25,7 @@ var _eventFilters = assign(EVENT_FILTER_DEFAULTS, {});
 
 
 var CHANGE_EVENT = 'change';
+var FILTER_EVENT = 'filter';
 
 
 function create (eventData) {
@@ -83,8 +84,37 @@ var EventStore = assign({}, EventEmitter.prototype, {
         return _eventFilters;
     },
 
+    /**
+     * @params (eventData)
+     * @returns bool
+     */
+    shouldEventBeShown: function (eventData) {
+        var value;
+        var startDateFilters;
+
+        for (var key in _eventFilters) {
+            value = eventData[key];
+            if (key == 'StartDate') {
+                // handle date range
+                value = moment(value, 'MM/DD/YYYY');
+                startDateFilters = _eventFilters[key];
+                if ((startDateFilters.BEGINS && startDateFilters.BEGINS > value) ||
+                    (startDateFilters.ENDS && startDateFilters.ENDS < value)) {
+                    return false;
+                }
+            } else if (!_eventFilters[key][value]) {
+                return false;
+            }
+        }
+        return true;
+    },
+
     emitChange: function () {
         this.emit(CHANGE_EVENT);
+    },
+
+    emitFilter: function () {
+        this.emit(FILTER_EVENT);
     },
 
     addChangeListener: function (callback) {
@@ -93,9 +123,20 @@ var EventStore = assign({}, EventEmitter.prototype, {
 
     removeChangeListener: function (callback) {
         this.removeListener(CHANGE_EVENT, callback);
+    },
+
+    addFilterListener: function (callback) {
+        this.on(FILTER_EVENT, callback);
+    },
+
+    removeFilterListener: function (callback) {
+        this.removeListener(FILTER_EVENT, callback);
     }
 
 });
+
+
+EventStore.setMaxListeners(10000);
 
 
 // Register callback to handle updates
@@ -113,7 +154,7 @@ AppDispatcher.register(function (payload) {
             break;
         case EventConstants.FILTER:
             filter(action.filterData);
-            EventStore.emitChange();
+            EventStore.emitFilter();
             break;
         default:
             console.log('noop');

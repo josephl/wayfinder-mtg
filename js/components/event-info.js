@@ -1,5 +1,7 @@
 var React = require('react');
 
+var EventStore = require('../stores/event-store');
+
 
 var REACTID_REGEX = / data-reactid="[^"]+"/g;
 var addressKeys = [
@@ -14,8 +16,9 @@ function wizardsUrl (id, country) {
 }
 
 
-/* Cache filtered Markers and InfoWindows */
-var _cache = {};
+function getVisibilityState(eventData) {
+    return { visible: EventStore.shouldEventBeShown(eventData) };
+}
 
 
 /**
@@ -31,30 +34,29 @@ var EventInfo = React.createClass({
         Address: React.PropTypes.object
     },
 
+    getInitialState: function () {
+        return getVisibilityState(this.props);
+    },
+
     componentDidMount: function () {
-        var cachedEvent = _cache[this.props.Id];
         var contentString;
         var position;
 
-        if (typeof(cachedEvent) !== 'undefined') {
-            this.marker = cachedEvent.marker;
+        EventStore.addFilterListener(this._onChange);
+        contentString = this.getDOMNode().innerHTML.replace(
+            REACTID_REGEX, '');
+        position = new google.maps.LatLng(this.props.Address.Latitude,
+            this.props.Address.Longitude);
+        this.marker = new google.maps.Marker({
+            position: position,
+            title: this.props.Name
+        });
+        if (this.state.visible === true) {
             this.marker.setMap(this.props.map);
-            this.infoWindow = cachedEvent.infoWindow;
-            _cache[this.props.Id] = undefined;
-        } else {
-            contentString = this.getDOMNode().innerHTML.replace(
-                REACTID_REGEX, '');
-            position = new google.maps.LatLng(this.props.Address.Latitude,
-                this.props.Address.Longitude);
-            this.marker = new google.maps.Marker({
-                map: this.props.map,
-                position: position,
-                title: this.props.Name
-            });
-            this.infoWindow = new google.maps.InfoWindow({
-                content: contentString
-            });
         }
+        this.infoWindow = new google.maps.InfoWindow({
+            content: contentString
+        });
 
         this.clickListener = google.maps.event.addListener(this.marker, 'click',
             function () {
@@ -72,12 +74,23 @@ var EventInfo = React.createClass({
         this.infoWindow.close();
         this.marker.setMap(null);
         google.maps.event.removeListener(this.clickListener);
+        EventStore.removeFilterListener(this._onChange);
+    },
 
-        // cache InfoWindow and Marker
-        _cache[this.props.Id] = {
-            marker: this.marker,
-            infoWindow: this.infoWindow
-        };
+    shouldComponentUpdate: function (nextProps, nextState) {
+        if (this.state.visible !== nextState.visible) {
+            if (nextState.visible === false) {
+                this.infoWindow.close();
+                this.marker.setMap(null);
+            } else if (nextState.visible === true) {
+                this.marker.setMap(this.props.map);
+            }
+        }
+        return false;
+    },
+
+    _onChange: function () {
+        this.setState(getVisibilityState(this.props));
     },
 
     render: function () {

@@ -4,7 +4,7 @@ var EventInfo = require('./event-info');
 
 
 /**
- * Determin if event should be shown
+ * Determine if event should be shown
  * @param (eventData) data of event
  * @param (filters) Object of filters from EventStore
  * @returns bool
@@ -37,8 +37,7 @@ function showEvent (eventData, filters) {
 var QedMap = React.createClass({
 
     propTypes: {
-        allEvents: React.PropTypes.object,
-        eventFilters: React.PropTypes.object
+        allEvents: React.PropTypes.object
     },
 
     componentDidMount: function () {
@@ -49,8 +48,16 @@ var QedMap = React.createClass({
 
     render: function () {
         var eventData;
-        var eventsInfo = typeof(this.gmap) !== 'undefined' ?
-            this.filteredEvents() : [];
+        var eventsInfo = [];
+
+        if (typeof(this.gmap) !== 'undefined') {
+            for (var key in this.props.allEvents) {
+                eventData = this.props.allEvents[key];
+                eventsInfo.push(
+                    <EventInfo {...eventData} key={key} map={this.gmap} />
+                );
+            }
+        }
 
         return (
             <div>
@@ -58,23 +65,6 @@ var QedMap = React.createClass({
                 {eventsInfo}
             </div>
         );
-    },
-
-    /* Apply filters to events */
-    filteredEvents: function () {
-        var eventData;
-        var eventsInfo = [];
-
-        for (var key in this.props.allEvents) {
-            eventData = this.props.allEvents[key];
-            if (showEvent(eventData, this.props.eventFilters)) {
-                eventsInfo.push(
-                    <EventInfo {...eventData} key={key} map={this.gmap} />
-                );
-            }
-        }
-
-        return eventsInfo;
     },
 
     containerStyles: {

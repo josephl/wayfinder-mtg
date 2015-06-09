@@ -1,4 +1,6 @@
 var EventActions = require('../actions/event-actions');
+var EventStore = require('../stores/event-store');
+
 var React = require('react');
 
 
@@ -8,6 +10,11 @@ var overlayStyles = {
     left: 0,
     zIndex: 999
 };
+
+
+function getEventFilterState() {
+    return { eventFilters: EventStore.getEventFilters() };
+}
 
 
 var Checkbox = React.createClass({
@@ -43,7 +50,6 @@ var FormatField = React.createClass({
                 <Checkbox
                     key={key}
                     value={key}
-                    onChange={this.props.onChange}
                     checked={this.props.filters[key]} />
             );
         }
@@ -60,8 +66,20 @@ var FORMAT_KEY = 'PlayFormatCode';
 
 var QedForm = React.createClass({
 
+    getInitialState: function () {
+        return getEventFilterState();
+    },
+
     propTypes: {
         eventFilters: React.PropTypes.object
+    },
+
+    componentDidMount: function () {
+        EventStore.addFilterListener(this._onChange);
+    },
+
+    componentWillUnmount: function () {
+        EventStore.removeFilterListener(this._onChange);
     },
 
     render: function () {
@@ -69,9 +87,13 @@ var QedForm = React.createClass({
             <form style={overlayStyles}>
                 <FormatField
                     key={FORMAT_KEY}
-                    filters={this.props.eventFilters[FORMAT_KEY]} />
+                    filters={this.state.eventFilters[FORMAT_KEY]} />
             </form>
         );
+    },
+
+    _onChange: function () {
+        this.setState(getEventFilterState());
     }
 
 });

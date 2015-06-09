@@ -6,11 +6,8 @@ var QedForm = require('./qed-form');
 var React = require('react');
 
 
-function getQedState() {
-    return {
-        allEvents: EventStore.getAllEvents(),
-        eventFilters: EventStore.getEventFilters()
-    };
+function getEventsState() {
+    return { allEvents: EventStore.getAllEvents() };
 }
 
 
@@ -36,7 +33,7 @@ function initialEventRequest () {
 var QedApp = React.createClass({
 
     getInitialState: function () {
-        return getQedState();
+        return getEventsState();
     },
 
     componentDidMount: function () {
@@ -51,17 +48,14 @@ var QedApp = React.createClass({
     render: function () {
         return (
             <div>
-                <QedMap
-                    allEvents={this.state.allEvents}
-                    eventFilters={this.state.eventFilters} />
-                <QedForm
-                    eventFilters={this.state.eventFilters} />
+                <QedMap allEvents={this.state.allEvents} />
+                <QedForm />
             </div>
         );
     },
 
     _onChange: function () {
-        this.setState(getQedState());
+        this.setState(getEventsState());
     }
 
 });
